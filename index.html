@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日一日頑張ったあなたへ</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        /* 基本背景グラデーション */
+        .bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #eef2f7, #dfe9f3);
+            transition: background 2.5s ease-in-out;
+            z-index: 1;
+        }
+
+        /* ユーザーが用意したオリジナルイラスト（PNG）を背景として滑らかにフェード表示 */
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transform: scale(1.05);
+            transition: opacity 2s cubic-bezier(0.25, 1, 0.5, 1), transform 3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 2;
+        }
+
+        .bg-image.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* 幻想的な光のオーブ（初期画面用） */
+        .glow-orb {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            transition: all 3s ease-in-out;
+            z-index: 3;
+        }
+        .orb1 {
+            top: -10%;
+            left: -10%;
+            background: radial-gradient(circle, #ffdad5 0%, rgba(255,255,255,0) 70%);
+        }
+        .orb2 {
+            bottom: -10%;
+            right: -10%;
+            background: radial-gradient(circle, #d0e1fd 0%, rgba(255,255,255,0) 70%);
+        }
+
+        /* 全体を覆うふんわりしたオーバーレイ（すりガラス効果） */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0);
+            z-index: 4;
+        }
+
+        /* メインコンテンツのコンテナ */
+        .card-wrapper {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 540px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 最初（診断前・診断中）のカード内上部イメージヘッダー */
+        .header-image-container {
+            width: 100%;
+            height: 150px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .header-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            letter-spacing: 0.06em;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #5a6b7c;
+            margin-bottom: 24px;
+        }
+
+        /* 進捗バーのスタイル */
+        .progress-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            height: 6px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #a1c4fd, #c2e9fb);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+        }
+
+        .question-number {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* 質問選択肢のボタン */
+        .choice-btn {
+            display: block;
+            width: 100%;
+            padding: 16px 20px;
+            margin: 14px 0;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            font-size: 0.95rem;
+            color: #34495e;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: all 0.25s ease;
+            text-align: left;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .choice-btn:hover {
+            transform: translateY(-2px);
+            background: #ffffff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            border-color: #a1c4fd;
+            color: #2c3e50;
+        }
+
+        .choice-btn::after {
+            content: "➔";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: all 0.25s ease;
+        }
+
+        .choice-btn:hover::after {
+            opacity: 1;
+            right: 15px;
+        }
+
+        /* 寄り添いメッセージのスタイル */
+        .empathy-message {
+            font-size: 1rem;
+            color: #2c3e50;
+            background: rgba(255, 255, 255, 0.55);
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            line-height: 1.8;
+            border-left: 5px solid #a1c4fd;
+            text-align: left;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+
+        .empathy-message strong {
+            font-size: 1.25rem;
+            color: #1a252f;
+            display: block;
+            margin-bottom: 12px;
+            letter-spacing: 0.02em;
+        }
+
+        /* アクションボタン */
+        .next-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(161, 196, 253, 0.4);
+            letter-spacing: 0.1em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(161, 196, 253, 0.5);
+            filter: brightness(1.02);
+        }
+
+        /* 音楽プレイヤーエリア */
+        .player-controls {
+            margin-top: 25px;
+            background: rgba(255,255,255,0.5);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .status-text {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #2c3e50;
+            letter-spacing: 0.05em;
+        }
+
+        .sub-status {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            letter-spacing: 0.02em;
+        }
+
+        /* ビジュアルキャンバス */
+        .visualizer-container {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+        
+        #visualizerCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* シンセサイザーのコントロールスライダー */
+        .synth-sliders {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .slider-group {
+            margin-bottom: 12px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.08);
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #a1c4fd;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform 0.1s;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* 音楽プレイヤー用ボタン群 */
+        .play-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .circle-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            color: #5a6b7c;
+        }
+
+        .circle-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            color: #2c3e50;
+        }
+
+        .circle-btn.play-toggle {
+            background: #2c3e50;
+            color: white;
+            width: 64px;
+            height: 64px;
+        }
+
+        .circle-btn.play-toggle:hover {
+            background: #1a252f;
+            box-shadow: 0 8px 22px rgba(44, 62, 80, 0.3);
+        }
+
+        .circle-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+
+        .circle-btn.play-toggle svg {
+            width: 26px;
+            height: 26px;
+        }
+
+        .restart-btn {
+            background: none;
+            border: 1px solid rgba(0,0,0,0.15);
+            color: #7f8c8d;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 25px;
+            font-weight: 600;
+            transition: all 0.25s;
+            letter-spacing: 0.05em;
+        }
+
+        .restart-btn:hover {
+            background: rgba(0,0,0,0.04);
+            color: #2c3e50;
+            border-color: rgba(0,0,0,0.3);
+        }
+
+        /* 非表示クラス */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 呼吸ガイド（癒やしアニメーション） */
+        .breath-guide-wrap {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .breath-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(161, 196, 253, 0.3);
+            animation: breathCycle 8s infinite ease-in-out;
+            margin-bottom: 8px;
+        }
+
+        .breath-text {
+            font-size: 0.75rem;
+            color: #95a5a6;
+            font-weight: 500;
+        }
+
+        @keyframes breathCycle {
+            0%, 100% { transform: scale(1); background: rgba(161, 196, 253, 0.3); }
+            40% { transform: scale(2.2); background: rgba(194, 233, 251, 0.6); }
+            60% { transform: scale(2.2); background: rgba(194, 233, 251, 0.6); }
+        }
+
+        /* フェードイン表示用 */
+        .fade-in {
+            animation: fadeInEffect 0.8s ease forwards;
+        }
+
+        @keyframes fadeInEffect {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bgContainer" class="bg-container"></div>
+    <!-- ユーザーのオリジナルイラストを背景スライドショーとして機能させる要素 -->
+    <div id="bgImageLayer" class="bg-image"></div>
+    
+    <div id="orb1" class="glow-orb orb1"></div>
+    <div id="orb2" class="glow-orb orb2"></div>
+    <div class="overlay"></div>
+
+    <!-- お手元音源（MP3）を読み込むための非表示オーディオ要素（Web Audio APIに接続） -->
+    <audio id="audioSource" crossorigin="anonymous" loop></audio>
+
+    <div class="card-wrapper">
+        <div class="main-card" id="cardElement">
+            
+            <!-- クイズ画面 -->
+            <div id="stepQuiz" class="fade-in">
+                <!-- クイズの一番最初のヘッダーイメージ -->
+                <div class="header-image-container">
+                    <img src="image.png" alt="今日一日頑張ったあなたへ" class="header-img">
+                </div>
+                <h1 style="font-size:1.15rem; margin-bottom:6px; color:#2c3e50;">今日一日頑張ったあなたへ</h1>
+                <p style="font-size:0.85rem; color:#7f8c8d; margin-bottom:18px;">今日の自分を振り返りながら、答えてみてください</p>
+
+                <div class="question-number" id="qNumber">第 1 問 / 5</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="pBar"></div>
+                </div>
+                <h1 id="questionText">ここに質問が表示されます</h1>
+                
+                <div id="choiceContainer">
+                    <!-- JSで選択肢ボタンが追加されます -->
+                </div>
+            </div>
+
+            <!-- 寄り添い診断結果画面 -->
+            <div id="stepMessage" class="hidden">
+                <h1>今日一日頑張ったあなたへ</h1>
+                <div id="closingMessage" style="font-size:1.05rem; color:#2c3e50; background:rgba(255,255,255,0.55); padding:18px 20px; border-radius:16px; margin-bottom:18px; line-height:1.9; text-align:center; border: 1px solid rgba(200,220,255,0.5);">
+                    <!-- ここにお疲れさまメッセージが入ります -->
+                </div>
+                <div id="empathyText" class="empathy-message">
+                    <!-- ここに個別の寄り添いテキストが生成されます -->
+                </div>
+
+                <div class="breath-guide-wrap">
+                    <div class="breath-circle"></div>
+                    <span class="breath-text" id="breathLabel">ゆっくりと深呼吸を合わせましょう</span>
+                </div>
+
+                <p>あなたの今夜にぴったりの音楽を調律しました。心を委ねてお聴きください。</p>
+                <button class="next-btn" onclick="startMusicAndBg()">このまま音楽を聴く</button>
+            </div>
+
+            <!-- プレイヤー画面 -->
+            <div id="stepPlayer" class="hidden">
+                <div class="status-text" id="moodStatus">あなたの心に寄り添って</div>
+                <div class="sub-status" id="fileStatus">ココロ調律中...</div>
+
+                <!-- 音楽再生中に表示するメッセージ -->
+                <div id="playerClosingMessage" style="font-size:0.92rem; color:#2c3e50; background:rgba(255,255,255,0.55); padding:14px 18px; border-radius:14px; margin-bottom:12px; line-height:1.85; text-align:center; border:1px solid rgba(200,220,255,0.5);"></div>
+
+                <!-- 波形ビジュアライザー -->
+                <div class="visualizer-container">
+                    <canvas id="visualizerCanvas"></canvas>
+                </div>
+
+                <!-- リアルタイム・サウンドコントロール -->
+                <div class="player-controls">
+                    <div class="synth-sliders">
+                        <div class="slider-group">
+                            <label><span>調律の深さ (フィルターカットオフ)</span><span id="valCutoff">100%</span></label>
+                            <input type="range" id="sliderCutoff" min="200" max="4000" value="2200" step="50">
+                        </div>
+                        <div class="slider-group">
+                            <label><span>ひびき (残響音ディレイ)</span><span id="valDelay">50%</span></label>
+                            <input type="range" id="sliderDelay" min="0" max="90" value="50">
+                        </div>
+                        <div class="slider-group">
+                            <label><span>ボリューム</span><span id="valVolume">80%</span></label>
+                            <input type="range" id="sliderVolume" min="0" max="100" value="80">
+                        </div>
+                    </div>
+
+                    <div class="play-buttons">
+                        <!-- 前のチューニングを模した気分切り替えボタン -->
+                        <button class="circle-btn" onclick="tweakTone(-1)" title="少し落ち着いた音へ">
+                            <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                        </button>
+                        <!-- 再生・一時停止 -->
+                        <button class="circle-btn play-toggle" id="btnTogglePlay" onclick="togglePlay()" title="再生/一時停止">
+                            <svg id="svgPlay" viewBox="0 0 24 24" class="hidden"><path d="M8 5v14l11-7z"/></svg>
+                            <svg id="svgPause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                        <!-- 次のチューニング -->
+                        <button class="circle-btn" onclick="tweakTone(1)" title="少し明るい音へ">
+                            <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="restart-btn" onclick="resetApp()">もう一度診断する</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 5問の質問リスト（一日の終わりを振り返るテーマ）
+        const questions = [
+            {
+                text: "今日一日を振り返って、心はどんな色に染まっていますか？",
+                choices: [
+                    {t:"明るく温かい、喜びや達成感に満ちた色", m:"happy"},
+                    {t:"燃えるような赤。今日も全力で駆け抜けた色", m:"energetic"},
+                    {t:"優しい夕暮れのような、ほっとする淡い色", m:"relaxed"},
+                    {t:"静かに沈んでいく、深い藍色のような色", m:"sad"}
+                ]
+            },
+            {
+                text: "今日一番、自分をほめてあげたいのはどんな場面ですか？",
+                choices: [
+                    {t:"誰かの笑顔をつくれた瞬間", m:"happy"},
+                    {t:"あきらめずに踏ん張り続けた瞬間", m:"energetic"},
+                    {t:"丁寧に、自分のペースで物事を進められた瞬間", m:"relaxed"},
+                    {t:"しんどくても、それでも前を向いていた瞬間", m:"sad"}
+                ]
+            },
+            {
+                text: "今夜、一番ほっとできそうな過ごし方は？",
+                choices: [
+                    {t:"好きな人と笑いながら、楽しい時間を過ごす", m:"happy"},
+                    {t:"好きな音楽をかけながら、気分よくリフレッシュする", m:"energetic"},
+                    {t:"お気に入りの飲み物を片手に、ぼーっとする", m:"relaxed"},
+                    {t:"布団に包まれて、そっと目を閉じる", m:"sad"}
+                ]
+            },
+            {
+                text: "今日の自分に、一言かけるとしたら？",
+                choices: [
+                    {t:"「今日も最高だったよ！」", m:"happy"},
+                    {t:"「よくそこまで頑張れたね」", m:"energetic"},
+                    {t:"「今日も無理せずよかったよ」", m:"relaxed"},
+                    {t:"「つらかったね、ゆっくり休んで」", m:"sad"}
+                ]
+            },
+            {
+                text: "最後に、今の体と心の重さはどのくらいですか？",
+                choices: [
+                    {t:"軽やか！まだまだ元気が余っている", m:"happy"},
+                    {t:"達成感はあるけど、心地よく疲れた感じ", m:"energetic"},
+                    {t:"ちょうどいい疲れ。ゆっくり休みたい", m:"relaxed"},
+                    {t:"かなりくたくた。今日はもう何もしたくない", m:"sad"}
+                ]
+            }
+        ];
+
+        // 状態管理
+        let currentQuestionIndex = 0;
+        let scores = { happy: 0, energetic: 0, relaxed: 0, sad: 0 };
+        let finalMood = "relaxed"; // デフォルト
+
+        // UI要素
+        const cardElement = document.getElementById("cardElement");
+        const qNumber = document.getElementById("qNumber");
+        const pBar = document.getElementById("pBar");
+        const questionText = document.getElementById("questionText");
+        const choiceContainer = document.getElementById("choiceContainer");
+
+        const stepQuiz = document.getElementById("stepQuiz");
+        const stepMessage = document.getElementById("stepMessage");
+        const stepPlayer = document.getElementById("stepPlayer");
+
+        const empathyText = document.getElementById("empathyText");
+        const moodStatus = document.getElementById("moodStatus");
+        const fileStatus = document.getElementById("fileStatus");
+
+        const bgContainer = document.getElementById("bgContainer");
+        const bgImageLayer = document.getElementById("bgImageLayer");
+        const orb1 = document.getElementById("orb1");
+        const orb2 = document.getElementById("orb2");
+        const audioSource = document.getElementById("audioSource");
+
+        // 呼吸アニメーション用ラベル制御
+        const breathLabel = document.getElementById("breathLabel");
+        const breathTexts = ["ゆっくり息を吸って...", "吸い込んで, 止めて...", "優しく息を吐いて...", "吐き出して、空っぽに..."];
+        let breathInterval;
+
+        function startBreathText() {
+            let i = 0;
+            breathLabel.innerText = breathTexts[i];
+            breathInterval = setInterval(() => {
+                i = (i + 1) % breathTexts.length;
+                breathLabel.innerText = breathTexts[i];
+            }, 2000);
+        }
+
+        function stopBreathText() {
+            clearInterval(breathInterval);
+        }
+
+        // クイズ開始・更新処理
+        function loadQuestion() {
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            // 進捗の描画
+            qNumber.innerText = `第 ${currentQuestionIndex + 1} 問 / 5`;
+            pBar.style.width = `${((currentQuestionIndex + 1) / 5) * 100}%`;
+            
+            // 質問文
+            questionText.innerText = currentQuestion.text;
+            
+            // 選択肢クリア＆追加
+            choiceContainer.innerHTML = "";
+            currentQuestion.choices.forEach(choice => {
+                const button = document.createElement("button");
+                button.className = "choice-btn";
+                button.innerText = choice.t;
+                button.onclick = () => selectChoice(choice.m);
+                choiceContainer.appendChild(button);
+            });
+        }
+
+        function selectChoice(mood) {
+            scores[mood]++;
+            
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                cardElement.classList.remove("fade-in");
+                void cardElement.offsetWidth; // リフロー
+                cardElement.classList.add("fade-in");
+                loadQuestion();
+            } else {
+                calculateResult();
+            }
+        }
+
+        // 各気分の診断メッセージ、イラスト画像(*.png)、実音源ファイル(*.mp3)の設定
+        const moodThemes = {
+            happy: {
+                title: "✨ 今日もよく輝きました",
+                bg: "linear-gradient(135deg, #FFF9E6, #FFF0B3, #FFD54F)",
+                orb1: "#FFD54F",
+                orb2: "#FF9100",
+                status: "爽快で前向きな調律",
+                subStatus: "心地よい高鳴りと光を編み込んだメロディ",
+                audioSrc: "happy.mp3",
+                bgImage: "happy.png",
+                closing: "お疲れさまでした。🌟<br>今日のあなたは、まわりにたくさんの笑顔と温かさを届けていましたね。<br>その明るさは、本当に素晴らしいものです。<br>今夜はそのまま、心のままにゆっくり過ごしてください。<br>明日の活力になりますように。",
+                desc: "今日のあなたの心は、明るい陽だまりのようにキラキラと輝いていました。小さな喜びを大切に受け取り、まわりにも温かな光を届けられた一日でした。そんな今夜のあなたに、軽やかで心弾む音楽をお送りします。"
+            },
+            energetic: {
+                title: "🔥 今日も全力でよく頑張りました",
+                bg: "linear-gradient(135deg, #FFF2E6, #FFCC99, #FF7043)",
+                orb1: "#FF7043",
+                orb2: "#D50000",
+                status: "情熱を刺激する鼓動調律",
+                subStatus: "心拍と共鳴する前進的なパルス",
+                audioSrc: "energetic.mp3",
+                bgImage: "energetic.png",
+                closing: "お疲れさまでした。🔥<br>今日のあなたは、本当によく頑張りましたね。<br>その情熱と粘り強さは、確かな力になっています。<br>今夜はその頑張りをしっかり労ってあげてください。<br>ゆっくり休んで、また明日も一緒に歩みましょう。",
+                desc: "今日のあなたは、内側から燃え上がるエネルギーで全力で駆け抜けました。諦めずに踏ん張ったその姿は本当にかっこいいです。今夜はその熱量を少し落ち着けて、体と心をゆっくり休ませてあげましょう。"
+            },
+            relaxed: {
+                title: "🌿 今日も自分らしく過ごせましたね",
+                bg: "linear-gradient(135deg, #E6F4EA, #A3E4D7, #48C9B0)",
+                orb1: "#48C9B0",
+                orb2: "#2E4053",
+                status: "心安らぐ静謐な調律",
+                subStatus: "穏やかな呼吸を促すアンビエントパッド",
+                audioSrc: "relaxed.mp3",
+                bgImage: "relaxed.png",
+                closing: "お疲れさまでした。🌿<br>今日も自分のペースを大切に、丁寧に過ごせましたね。<br>それだけで十分、素晴らしい一日です。<br>今夜もそのゆったりした時間を大切にして、ゆっくり休んでくださいね。<br>明日もきっと穏やかな一日になりますように。",
+                desc: "今日のあなたは、風にそよぐ葉のように穏やかで、自分らしいペースで一日を過ごせました。そのゆとりはとても大切なものです。今夜はさらに深くリラックスできるよう、心地よい音楽をお届けします。"
+            },
+            sad: {
+                title: "🌧 今日もよく耐えました。えらい。",
+                bg: "linear-gradient(135deg, #EBF5FB, #AED6F1, #5DADE2)",
+                orb1: "#5DADE2",
+                orb2: "#34495E",
+                status: "心に寄り添う慈愛の調律",
+                subStatus: "涙を優しくすくい上げるような雨の音律",
+                audioSrc: "sad.mp3",
+                bgImage: "sad.png",
+                closing: "今日も本当にお疲れさまでした。🌧<br>しんどかったね。つらかったね。<br>それでも今日一日、ちゃんと生きてくれてありがとう。<br>今夜は何も頑張らなくていいです。<br>ゆっくりゆっくり、休んでくださいね。<br>明日は今日より、少しだけ楽になりますように。",
+                desc: "今日のあなたは、心が疲れていても、それでも前を向いていました。それだけでもう十分すごいことです。今夜はそんな自分をそっと抱きしめて、この音楽に心を預けてみてください。"
+            }
+        };
+
+        function calculateResult() {
+            let maxScore = -1;
+            let finalResult = "relaxed";
+
+            for (const [mood, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    finalResult = mood;
+                }
+            }
+            finalMood = finalResult;
+
+            // 診断結果画面のセットアップ
+            const theme = moodThemes[finalMood];
+            document.getElementById("closingMessage").innerHTML = theme.closing;
+            empathyText.innerHTML = `<strong>${theme.title}</strong>${theme.desc}`;
+            
+            // 背景やオーブの色を緩やかに変化
+            bgContainer.style.background = theme.bg;
+            orb1.style.background = `radial-gradient(circle, ${theme.orb1} 0%, rgba(255,255,255,0) 70%)`;
+            orb2.style.background = `radial-gradient(circle, ${theme.orb2} 0%, rgba(255,255,255,0) 70%)`;
+
+            // ユーザーイラストをふんわりフェードインさせて表示
+            bgImageLayer.style.backgroundImage = `url('${theme.bgImage}')`;
+            bgImageLayer.classList.add("active");
+
+            // 画面切り替え
+            stepQuiz.classList.add("hidden");
+            stepMessage.classList.remove("hidden");
+            stepMessage.classList.add("fade-in");
+            startBreathText();
+        }
+
+        function startMusicAndBg() {
+            stopBreathText();
+            stepMessage.classList.add("hidden");
+            stepPlayer.classList.remove("hidden");
+            stepPlayer.classList.add("fade-in");
+
+            const theme = moodThemes[finalMood];
+            moodStatus.innerText = theme.title;
+            fileStatus.innerText = theme.status + " を再生中...";
+
+            // プレイヤー画面にもメッセージを表示
+            document.getElementById("playerClosingMessage").innerHTML = theme.closing;
+
+            // 実音源ファイル（MP3）の読み込み＆再生
+            initSynthAndPlay();
+        }
+
+        function resetApp() {
+            // オーディオの完全停止
+            stopSynthesizer();
+
+            currentQuestionIndex = 0;
+            scores = { happy: 0, energetic: 0, relaxed: 0, sad: 0 };
+            finalMood = "relaxed";
+
+            // 背景イメージや色のリセット
+            bgImageLayer.classList.remove("active");
+            bgImageLayer.style.backgroundImage = "none";
+            bgContainer.style.background = "linear-gradient(135deg, #eef2f7, #dfe9f3)";
+            orb1.style.background = "radial-gradient(circle, #ffdad5 0%, rgba(255,255,255,0) 70%)";
+            orb2.style.background = "radial-gradient(circle, #d0e1fd 0%, rgba(255,255,255,0) 70%)";
+
+            // 画面表示戻し
+            stepPlayer.classList.add("hidden");
+            stepMessage.classList.add("hidden");
+            stepQuiz.classList.remove("hidden");
+            stepQuiz.classList.add("fade-in");
+
+            loadQuestion();
+        }
+
+
+        // ====================================================================
+        //  WEB AUDIO API 実音源（MP3） ＆ リアルタイム・調律エフェクト
+        // ====================================================================
+        
+        let audioCtx = null;
+        let sourceNode = null;
+        let masterGain = null;
+        let analyser = null;
+        let filterNode = null;
+        let delayNode = null;
+        let delayGain = null;
+        
+        let isPlaying = false;
+
+        // 音色チューニング（プレイヤー画面で「前の音色」「次の音色」に切り替えるチューナー）
+        const moodsArray = ["sad", "relaxed", "happy", "energetic"];
+        function tweakTone(direction) {
+            let currentIndex = moodsArray.indexOf(finalMood);
+            let nextIndex = currentIndex + direction;
+            if (nextIndex < 0) nextIndex = 0;
+            if (nextIndex >= moodsArray.length) nextIndex = moodsArray.length - 1;
+            
+            finalMood = moodsArray[nextIndex];
+            const theme = moodThemes[finalMood];
+            moodStatus.innerText = theme.title;
+            fileStatus.innerText = theme.status + " に再調律しました";
+            document.getElementById("playerClosingMessage").innerHTML = theme.closing;
+
+            // 背景イラストを滑らかに切り替え
+            bgImageLayer.classList.remove("active");
+            setTimeout(() => {
+                bgImageLayer.style.backgroundImage = `url('${theme.bgImage}')`;
+                bgImageLayer.classList.add("active");
+            }, 300);
+
+            bgContainer.style.background = theme.bg;
+            orb1.style.background = `radial-gradient(circle, ${theme.orb1} 0%, rgba(255,255,255,0) 70%)`;
+            orb2.style.background = `radial-gradient(circle, ${theme.orb2} 0%, rgba(255,255,255,0) 70%)`;
+
+            // スライダー値をプリセット連動
+            if (finalMood === "sad" || finalMood === "relaxed") {
+                document.getElementById("sliderCutoff").value = 1200;
+                document.getElementById("sliderDelay").value = 75;
+            } else {
+                document.getElementById("sliderCutoff").value = 2800;
+                document.getElementById("sliderDelay").value = 40;
+            }
+            updateControlsDisplay();
+            applyControls();
+
+            // 新しい音源（MP3）を再セットしてロード・再生
+            if (audioCtx) {
+                audioSource.src = theme.audioSrc;
+                audioSource.load();
+                if (isPlaying) {
+                    audioSource.play().catch(e => console.log("再生エラー:", e));
+                }
+            }
+        }
+
+        // 音声回路の初期化と実音源（MP3）との接続
+        function initSynthAndPlay() {
+            const theme = moodThemes[finalMood];
+            
+            // オーディオ要素にソースを割り当て
+            audioSource.src = theme.audioSrc;
+            audioSource.load();
+
+            if (!audioCtx) {
+                // AudioContextの新規作成
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+                
+                // アナライザー（ビジュアライザー用）
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+
+                // フィルター（調律の深さ：ローパス）
+                filterNode = audioCtx.createBiquadFilter();
+                filterNode.type = "lowpass";
+                
+                // ディレイ（ひびき：エコー効果）
+                delayNode = audioCtx.createDelay(2.0);
+                delayGain = audioCtx.createGain();
+                
+                // マスターゲイン（音量調整）
+                masterGain = audioCtx.createGain();
+
+                // 実オーディオ要素からNodeを作成して結線
+                // [MP3 Source] -> filterNode -> masterGain -> destination
+                //                       |                  ^
+                //                       v                  |
+                //                   delayNode -> delayGain -
+                
+                sourceNode = audioCtx.createMediaElementSource(audioSource);
+                sourceNode.connect(filterNode);
+
+                filterNode.connect(masterGain);
+                filterNode.connect(delayNode);
+                delayNode.connect(delayGain);
+                
+                // ディレイ音をもう一度ディレイにフィードバックさせる（豊かなひびきを生成）
+                delayGain.connect(delayNode); 
+                delayGain.connect(masterGain);
+                
+                masterGain.connect(analyser);
+                analyser.connect(audioCtx.destination);
+            }
+
+            // サスペンド状態の解除（ブラウザの自動再生ブロックセキュリティ対策）
+            if (audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+
+            // スライダーコントロールの値を適用
+            applyControls();
+            
+            isPlaying = true;
+            document.getElementById("svgPlay").classList.add("hidden");
+            document.getElementById("svgPause").classList.remove("hidden");
+            
+            // 実音源（MP3）の再生開始
+            audioSource.play().catch(error => {
+                console.log("オーディオ再生の開始に失敗しました。ユーザーのジェスチャーが必要です:", error);
+                fileStatus.innerText = "クリックして再生を開始してください";
+                isPlaying = false;
+                document.getElementById("svgPause").classList.add("hidden");
+                document.getElementById("svgPlay").classList.remove("hidden");
+            });
+            
+            // リアルタイムビジュアライザーの描画ループ開始
+            drawVisualizer();
+        }
+
+        // スライダーコントロールの適用
+        function applyControls() {
+            if (!audioCtx) return;
+
+            const cutoffVal = parseFloat(document.getElementById("sliderCutoff").value);
+            const delayFeedback = parseFloat(document.getElementById("sliderDelay").value) / 100;
+            const volumeVal = parseFloat(document.getElementById("sliderVolume").value) / 100;
+
+            // ローパスフィルターの周波数設定（滑らかに音をこもらせる/明るくする）
+            filterNode.frequency.setTargetAtTime(cutoffVal, audioCtx.currentTime, 0.15);
+
+            // 残響ディレイ設定
+            let delayTime = 0.45; 
+            if (finalMood === "relaxed") delayTime = 0.65;
+            if (finalMood === "sad") delayTime = 0.85;
+            if (finalMood === "energetic") delayTime = 0.35;
+
+            delayNode.delayTime.setTargetAtTime(delayTime, audioCtx.currentTime, 0.3);
+            
+            // ディレイのフィードバック量をスライダーからダイレクトに変更
+            delayGain.gain.setTargetAtTime(delayFeedback * 0.7, audioCtx.currentTime, 0.15);
+
+            // マスターボリューム調整
+            masterGain.gain.setTargetAtTime(volumeVal * 0.9, audioCtx.currentTime, 0.1);
+        }
+
+        // コントロール表示（％値）の数値更新
+        function updateControlsDisplay() {
+            const cutoffVal = document.getElementById("sliderCutoff").value;
+            const delayVal = document.getElementById("sliderDelay").value;
+            const volumeVal = document.getElementById("sliderVolume").value;
+
+            document.getElementById("valCutoff").innerText = Math.round((cutoffVal / 4000) * 100) + "%";
+            document.getElementById("valDelay").innerText = delayVal + "%";
+            document.getElementById("valVolume").innerText = volumeVal + "%";
+        }
+
+        // スライダー各種操作のリスナー登録
+        document.getElementById("sliderCutoff").oninput = () => { updateControlsDisplay(); applyControls(); };
+        document.getElementById("sliderDelay").oninput = () => { updateControlsDisplay(); applyControls(); };
+        document.getElementById("sliderVolume").oninput = () => { updateControlsDisplay(); applyControls(); };
+
+        function togglePlay() {
+            if (isPlaying) {
+                // 一時停止
+                isPlaying = false;
+                document.getElementById("svgPause").classList.add("hidden");
+                document.getElementById("svgPlay").classList.remove("hidden");
+                fileStatus.innerText = "一時停止中...";
+                audioSource.pause();
+            } else {
+                // 再生再開
+                if (audioCtx && audioCtx.state === "suspended") {
+                    audioCtx.resume();
+                }
+                isPlaying = true;
+                document.getElementById("svgPlay").classList.add("hidden");
+                document.getElementById("svgPause").classList.remove("hidden");
+                fileStatus.innerText = moodThemes[finalMood].status + " を再生中...";
+                audioSource.play().catch(e => console.log("再生エラー:", e));
+            }
+        }
+
+        function stopSynthesizer() {
+            isPlaying = false;
+            audioSource.pause();
+            audioSource.currentTime = 0;
+        }
+
+
+        // ====================================================================
+        //  HTML5 CANVAS ネオン波形ビジュアライザー
+        // ====================================================================
+        const canvas = document.getElementById("visualizerCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // キャンバスサイズを親要素にレスポンシブ追従
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        function drawVisualizer() {
+            if (!isPlaying) {
+                requestAnimationFrame(drawVisualizer);
+                return;
+            }
+
+            requestAnimationFrame(drawVisualizer);
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            // MP3音楽の実際の時間領域波形（タイムドメインデータ）を取得
+            analyser.getByteTimeDomainData(dataArray);
+
+            // 残像を綺麗に引くため透明度を持たせて背景を塗りつぶし
+            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 線色の決定（現在のココロのムード調律色）
+            let lineColor = "#a1c4fd";
+            if (finalMood === "happy") lineColor = "#ffb7b2";
+            if (finalMood === "energetic") lineColor = "#ff7043";
+            if (finalMood === "relaxed") lineColor = "#48c9b0";
+            if (finalMood === "sad") lineColor = "#5dade2";
+
+            // ネオンラインスタイリング
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = lineColor;
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = lineColor;
+
+            ctx.beginPath();
+
+            const sliceWidth = canvas.width / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0; 
+                const y = (v * canvas.height) / 2;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // 描画後は影のプロパティをリセット（パフォーマンス対策）
+            ctx.shadowBlur = 0;
+        }
+
+        // アプリ起動時の初期読み込み
+        window.onload = () => {
+            loadQuestion();
+        };
+
+    </script>
+</body>
+</html>
