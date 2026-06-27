@@ -461,27 +461,39 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* サークルがはみ出しても被らないよう十分な高さを確保 */
+            min-height: 100px;
+            justify-content: center;
+        }
+
+        .breath-circle-container {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
         }
 
         .breath-circle {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: rgba(161, 196, 253, 0.3);
+            background: rgba(161, 196, 253, 0.4);
             animation: breathCycle 8s infinite ease-in-out;
-            margin-bottom: 8px;
         }
 
         .breath-text {
-            font-size: 0.75rem;
-            color: #95a5a6;
-            font-weight: 500;
+            font-size: 0.85rem;
+            color: #4a5568;
+            font-weight: 600;
+            text-align: center;
         }
 
         @keyframes breathCycle {
-            0%, 100% { transform: scale(1); background: rgba(161, 196, 253, 0.3); }
-            40% { transform: scale(2.2); background: rgba(194, 233, 251, 0.6); }
-            60% { transform: scale(2.2); background: rgba(194, 233, 251, 0.6); }
+            0%, 100% { transform: scale(1); background: rgba(161, 196, 253, 0.4); }
+            40% { transform: scale(2); background: rgba(194, 233, 251, 0.7); }
+            60% { transform: scale(2); background: rgba(194, 233, 251, 0.7); }
         }
 
         /* フェードイン表示用 */
@@ -542,7 +554,9 @@
                 </div>
 
                 <div class="breath-guide-wrap">
-                    <div class="breath-circle"></div>
+                    <div class="breath-circle-container">
+                        <div class="breath-circle"></div>
+                    </div>
                     <span class="breath-text" id="breathLabel">ゆっくりと深呼吸を合わせましょう</span>
                 </div>
 
@@ -1076,44 +1090,54 @@
         window.addEventListener("resize", resizeCanvas);
         resizeCanvas();
 
-        function drawVisualizer() {
-            if (!isPlaying) {
-                requestAnimationFrame(drawVisualizer);
-                return;
-            }
+        let fakeWaveTime = 0; // フォールバック波形用タイマー
 
+        function drawVisualizer() {
             requestAnimationFrame(drawVisualizer);
 
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            
-            // MP3音楽の実際の時間領域波形（タイムドメインデータ）を取得
-            analyser.getByteTimeDomainData(dataArray);
+            if (!isPlaying) return;
 
-            // 残像を綺麗に引くため透明度を持たせて背景を塗りつぶし
-            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 線色の決定（現在のココロのムード調律色）
+            // 線色の決定（現在のムード）
             let lineColor = "#a1c4fd";
             if (finalMood === "happy") lineColor = "#ffb7b2";
             if (finalMood === "energetic") lineColor = "#ff7043";
             if (finalMood === "relaxed") lineColor = "#48c9b0";
             if (finalMood === "sad") lineColor = "#5dade2";
 
-            // ネオンラインスタイリング
+            ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             ctx.lineWidth = 3.5;
             ctx.strokeStyle = lineColor;
             ctx.shadowBlur = 12;
             ctx.shadowColor = lineColor;
-
             ctx.beginPath();
+
+            // Web Audio APIが使えない場合はサイン波アニメーションで代用
+            if (!analyser) {
+                fakeWaveTime += 0.04;
+                const points = 80;
+                for (let i = 0; i < points; i++) {
+                    const x = (i / points) * canvas.width;
+                    const wave1 = Math.sin(i * 0.25 + fakeWaveTime) * 18;
+                    const wave2 = Math.sin(i * 0.1 + fakeWaveTime * 0.7) * 10;
+                    const y = canvas.height / 2 + wave1 + wave2;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                return;
+            }
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteTimeDomainData(dataArray);
 
             const sliceWidth = canvas.width / bufferLength;
             let x = 0;
 
             for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0; 
+                const v = dataArray[i] / 128.0;
                 const y = (v * canvas.height) / 2;
 
                 if (i === 0) {
