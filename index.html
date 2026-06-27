@@ -518,7 +518,7 @@
     <div class="overlay"></div>
 
     <!-- お手元音源（MP3）を読み込むための非表示オーディオ要素（Web Audio APIに接続） -->
-    <audio id="audioSource" loop></audio>
+    <audio id="audioSource" crossorigin="anonymous" loop></audio>
 
     <div class="card-wrapper">
         <div class="main-card" id="cardElement">
@@ -837,6 +837,8 @@
             stepMessage.classList.add("hidden");
             stepPlayer.classList.remove("hidden");
             stepPlayer.classList.add("fade-in");
+            // 非表示時に0だったキャンバスサイズを再計算
+            setTimeout(resizeCanvas, 50);
 
             const theme = moodThemes[finalMood];
             moodStatus.innerText = theme.title;
@@ -975,9 +977,10 @@
                     analyser.connect(audioCtx.destination);
                 } catch(e) {
                     // ローカルファイル等でWeb Audio API結線ができない場合は
-                    // ビジュアライザーなしで音楽のみ再生する
-                    console.log("Web Audio API接続をスキップ（音楽は通常再生されます）:", e);
+                    // フォールバック波形アニメーションで表示する
+                    console.log("Web Audio API接続をスキップ（フォールバック波形で表示）:", e);
                     audioCtx = null;
+                    analyser = null;
                 }
             }
 
